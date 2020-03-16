@@ -1,0 +1,40 @@
+# Build directories
+build/
+bin/
+lib/
+*.o
+*.obj
+*.a
+*.so
+*.dylib
+*.dll
+
+# CMake artifacts
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+*.ninja
+.ninja_deps
+.ninja_log
+
+# ISPC generated files
+*_ispc.h
+*_ispc_*.h
+
+# IDE and editor
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# Output data and artifacts
+output/
+*.vtk
+*.vti
+*.vts
+*.ppm
+*.png
+*.csv
+*.log
