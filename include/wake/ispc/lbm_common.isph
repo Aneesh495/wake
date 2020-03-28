@@ -1,0 +1,23 @@
+#pragma once
+
+// Common physical constants in lattice units
+#define LBM_CS 0.5773502691896258f
+#define LBM_CS2 (1.0f / 3.0f)
+#define LBM_INV_CS2 3.0f
+#define LBM_INV_2_CS4 4.5f
+#define LBM_INV_2_CS2 1.5f
+#define LBM_RHO_0 1.0f
+
+// Cell boundary types matching C++ CellType enum
+#define CELL_FLUID 0
+#define CELL_SOLID 1
+#define CELL_INFLOW 2
+#define CELL_OUTFLOW 3
+#define CELL_PERIODIC 4
+#define CELL_SYMMETRY 5
+#define CELL_MOVING_WALL 6
+
+// Clamping utility for numerical stability
+static inline varying float clamp_val(varying float val, uniform float min_val, uniform float max_val) {
+    return min(max(val, min_val), max_val);
+}

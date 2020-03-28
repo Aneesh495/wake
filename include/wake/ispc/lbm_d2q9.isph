@@ -1,0 +1,24 @@
+#pragma once
+
+#include "wake/ispc/lbm_common.isph"
+
+#define D2Q9_Q 9
+
+// Static constant tables for D2Q9 lattice
+static const uniform int d2q9_cx[D2Q9_Q] = {0,  1,  0, -1,  0,  1, -1, -1,  1};
+static const uniform int d2q9_cy[D2Q9_Q] = {0,  0,  1,  0, -1,  1,  1, -1, -1};
+
+static const uniform float d2q9_w[D2Q9_Q] = {
+    4.0f / 9.0f,
+    1.0f / 9.0f, 1.0f / 9.0f, 1.0f / 9.0f, 1.0f / 9.0f,
+    1.0f / 36.0f, 1.0f / 36.0f, 1.0f / 36.0f, 1.0f / 36.0f
+};
+
+static const uniform int d2q9_opposite[D2Q9_Q] = {0, 3, 4, 1, 2, 7, 8, 5, 6};
+
+// Calculate second-order Maxwell-Boltzmann equilibrium distribution for D2Q9
+static inline varying float d2q9_feq(uniform int i, varying float rho, varying float ux, varying float uy) {
+    varying float ci_u = (float)d2q9_cx[i] * ux + (float)d2q9_cy[i] * uy;
+    varying float u_sq = ux * ux + uy * uy;
+    return d2q9_w[i] * rho * (1.0f + LBM_INV_CS2 * ci_u + LBM_INV_2_CS4 * ci_u * ci_u - LBM_INV_2_CS2 * u_sq);
+}
