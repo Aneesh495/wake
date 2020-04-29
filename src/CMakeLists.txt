@@ -1,3 +1,4 @@
-# Core and ISPC subsystems
+# Subsystems
 add_subdirectory(core)
 add_subdirectory(ispc)
+add_subdirectory(grid)
