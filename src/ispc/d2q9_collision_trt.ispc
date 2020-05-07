@@ -3,6 +3,7 @@
 // Exported ISPC kernel for D2Q9 Two-Relaxation-Time (TRT) collision operator
 // Decouples symmetric (viscous) and anti-symmetric (advective) relaxation rates
 // Magic parameter Lambda = (tau_s - 0.5) * (tau_a - 0.5) stabilizes boundary locations
+// Exact TRT Guo body force decomposition: symmetric (omega_s) and anti-symmetric (omega_a)
 export void d2q9_collide_trt(
     const uniform float f_in[],
     uniform float f_out[],
@@ -18,7 +19,8 @@ export void d2q9_collide_trt(
 ) {
     uniform float omega_s = 1.0f / tau_s;
     uniform float omega_a = 1.0f / tau_a;
-    uniform float force_prefactor = (1.0f - 0.5f * omega_s);
+    uniform float prefactor_sym = (1.0f - 0.5f * omega_s);
+    uniform float prefactor_asym = (1.0f - 0.5f * omega_a);
 
     foreach (i = 0 ... count) {
         if (cell_type[i] == CELL_SOLID) {
@@ -79,9 +81,10 @@ export void d2q9_collide_trt(
             varying float ci_u = ci_x * local_ux + ci_y * local_uy;
             varying float ci_g = ci_x * gx + ci_y * gy;
 
-            varying float Fi = force_prefactor * d2q9_w[q] * local_rho * (
-                LBM_INV_CS2 * (ci_g - u_dot_g) + 9.0f * ci_u * ci_g
-            );
+            // Decomposed Guo force: odd part (ci_g) relaxes with omega_a; even part relaxes with omega_s
+            varying float F_asym = prefactor_asym * d2q9_w[q] * local_rho * (LBM_INV_CS2 * ci_g);
+            varying float F_sym  = prefactor_sym  * d2q9_w[q] * local_rho * (-LBM_INV_CS2 * u_dot_g + 9.0f * ci_u * ci_g);
+            varying float Fi = F_sym + F_asym;
 
             f_out[q * count + i] = f[q] - omega_s * (f_sym - feq_sym) - omega_a * (f_asym - feq_asym) + Fi;
         }

@@ -2,12 +2,15 @@
 #include <cmath>
 #include <algorithm>
 #include <numeric>
+#include <cstring>
 
 // C linkage declarations for ISPC exported functions
 namespace ispc {
 extern "C" {
     void d2q9_compute_macroscopic_moments(
         const float f[], float rho[], float ux[], float uy[], int count);
+    void d2q9_compute_macroscopic_moments_forced(
+        const float f[], float rho[], float ux[], float uy[], float gx, float gy, int count);
     void d2q9_compute_velocity_magnitude(
         const float ux[], const float uy[], float speed[], int count);
     void d2q9_collide_bgk(
@@ -21,8 +24,9 @@ extern "C" {
         float rho[], float ux[], float uy[], float tau_shear, float tau_bulk, float gx, float gy, int count);
     void d2q9_stream_periodic(
         const float f_src[], float f_dst[], int nx, int ny);
-    void d2q9_stream_interior(
-        const float f_src[], float f_dst[], int nx, int ny);
+    void d2q9_stream_with_boundaries(
+        const float f_src[], float f_dst[], const uint8_t cell_type[],
+        int nx, int ny, float uw_x, float uw_y);
     void d2q9_apply_bounce_back(
         float f[], const uint8_t cell_type[], float uw_x, float uw_y, int count);
     void d2q9_apply_zou_he_inflow_west(
@@ -213,7 +217,6 @@ void LatticeGrid2D::step(
             rho_.data(), ux_.data(), uy_.data(), effective_tau, gx, gy, count
         );
     } else if (collision == CollisionType::TRT) {
-        // Magic parameter Lambda = 1/4 = 0.25 -> tau_a = 0.5 + 0.25 / (tau_s - 0.5)
         real_t tau_s = effective_tau;
         real_t diff = std::max(1e-4f, tau_s - 0.5f);
         real_t tau_a = 0.5f + 0.25f / diff;
@@ -230,22 +233,13 @@ void LatticeGrid2D::step(
         );
     }
 
-    // 3. Streaming step: f_dst (post-collision) -> f_src (streamed)
-    if (!has_inflow_west_ && !has_outflow_east_) {
-        ispc::d2q9_stream_periodic(f_dst_.data(), f_src_.data(), nx_, ny_);
-    } else {
-        ispc::d2q9_stream_interior(f_dst_.data(), f_src_.data(), nx_, ny_);
-    }
-
-    // 4. Boundary conditions on f_src
-    // Solid obstacles bounce-back
-    ispc::d2q9_apply_bounce_back(
-        f_src_.data(), cell_type_.data(),
-        has_moving_wall_north_ ? u_wall_north_x_ : 0.0f,
-        0.0f, count
+    // 3. Streaming step with integrated half-way bounce-back: f_dst (post-collision) -> f_src (streamed)
+    ispc::d2q9_stream_with_boundaries(
+        f_dst_.data(), f_src_.data(), cell_type_.data(),
+        nx_, ny_, has_moving_wall_north_ ? u_wall_north_x_ : 0.0f, 0.0f
     );
 
-    // Inflow at west
+    // 4. Boundary conditions on open boundaries (inflow/outflow)
     if (has_inflow_west_) {
         ispc::d2q9_apply_zou_he_inflow_west(
             f_src_.data(), rho_.data(), ux_.data(), uy_.data(),
@@ -253,7 +247,6 @@ void LatticeGrid2D::step(
         );
     }
 
-    // Outflow at east
     if (has_outflow_east_) {
         ispc::d2q9_apply_convective_outflow_east(
             f_src_.data(), f_prev_outflow_.data(), u_inflow_x_ > 0.0f ? u_inflow_x_ : 0.05f, nx_, ny_
@@ -261,8 +254,13 @@ void LatticeGrid2D::step(
         std::memcpy(f_prev_outflow_.data(), f_src_.data(), f_src_.bytes());
     }
 
-    // 5. Update macroscopic moments
-    update_macroscopic();
+    // 5. Update macroscopic moments with body force velocity correction
+    ispc::d2q9_compute_macroscopic_moments_forced(
+        f_src_.data(), rho_.data(), ux_.data(), uy_.data(), gx, gy, count
+    );
+    ispc::d2q9_compute_velocity_magnitude(
+        ux_.data(), uy_.data(), speed_.data(), count
+    );
 
     ++step_count_;
 }

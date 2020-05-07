@@ -12,3 +12,4 @@ endmacro()
 
 wake_add_test(test_d2q9_moments unit/test_d2q9_moments.cpp)
 wake_add_test(test_d2q9_collision unit/test_d2q9_collision.cpp)
+wake_add_test(test_poiseuille_convergence validation/test_poiseuille_convergence.cpp)
