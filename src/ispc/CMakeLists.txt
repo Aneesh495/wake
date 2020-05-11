@@ -7,6 +7,7 @@ set(ISPC_SOURCES
     d2q9_streaming.ispc
     d2q9_boundaries.ispc
     d2q9_les.ispc
+    d3q19_moments.ispc
 )
 
 add_library(wake_ispc_kernels STATIC

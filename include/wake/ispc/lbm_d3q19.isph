@@ -1,0 +1,41 @@
+#pragma once
+
+#include "wake/ispc/lbm_common.isph"
+
+#define D3Q19_Q 19
+
+// Static constant tables for 3D D3Q19 lattice
+static const uniform int d3q19_cx[D3Q19_Q] = {
+    0,  1, -1,  0,  0,  0,  0,  1, -1,  1, -1,  1, -1,  1, -1,  0,  0,  0,  0
+};
+static const uniform int d3q19_cy[D3Q19_Q] = {
+    0,  0,  0,  1, -1,  0,  0,  1,  1, -1, -1,  0,  0,  0,  0,  1, -1,  1, -1
+};
+static const uniform int d3q19_cz[D3Q19_Q] = {
+    0,  0,  0,  0,  0,  1, -1,  0,  0,  0,  0,  1,  1, -1, -1,  1,  1, -1, -1
+};
+
+static const uniform float d3q19_w[D3Q19_Q] = {
+    1.0f / 3.0f,
+    1.0f / 18.0f, 1.0f / 18.0f, 1.0f / 18.0f, 1.0f / 18.0f, 1.0f / 18.0f, 1.0f / 18.0f,
+    1.0f / 36.0f, 1.0f / 36.0f, 1.0f / 36.0f, 1.0f / 36.0f,
+    1.0f / 36.0f, 1.0f / 36.0f, 1.0f / 36.0f, 1.0f / 36.0f,
+    1.0f / 36.0f, 1.0f / 36.0f, 1.0f / 36.0f, 1.0f / 36.0f
+};
+
+static const uniform int d3q19_opposite[D3Q19_Q] = {
+    0,  2,  1,  4,  3,  6,  5,  10, 9,  8,  7,  14, 13, 12, 11, 18, 17, 16, 15
+};
+
+// Calculate 3D Maxwell-Boltzmann equilibrium distribution for D3Q19
+static inline varying float d3q19_feq(
+    uniform int i,
+    varying float rho,
+    varying float ux,
+    varying float uy,
+    varying float uz
+) {
+    varying float ci_u = (float)d3q19_cx[i] * ux + (float)d3q19_cy[i] * uy + (float)d3q19_cz[i] * uz;
+    varying float u_sq = ux * ux + uy * uy + uz * uz;
+    return d3q19_w[i] * rho * (1.0f + LBM_INV_CS2 * ci_u + LBM_INV_2_CS4 * ci_u * ci_u - LBM_INV_2_CS2 * u_sq);
+}
