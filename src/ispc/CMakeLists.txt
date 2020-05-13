@@ -8,6 +8,8 @@ set(ISPC_SOURCES
     d2q9_boundaries.ispc
     d2q9_les.ispc
     d3q19_moments.ispc
+    d3q19_collision_bgk.ispc
+    d3q19_collision_trt.ispc
 )
 
 add_library(wake_ispc_kernels STATIC
