@@ -11,6 +11,7 @@ set(ISPC_SOURCES
     d3q19_collision_bgk.ispc
     d3q19_collision_trt.ispc
     d3q19_collision_mrt.ispc
+    d3q19_streaming.ispc
 )
 
 add_library(wake_ispc_kernels STATIC
