@@ -1,5 +1,6 @@
 add_library(wake_grid STATIC
     lattice_grid_2d.cpp
+    lattice_grid_3d.cpp
 )
 
 target_include_directories(wake_grid PUBLIC
