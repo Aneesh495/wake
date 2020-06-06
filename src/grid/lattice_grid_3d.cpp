@@ -133,6 +133,9 @@ void LatticeGrid3D::initialize_custom(
 void LatticeGrid3D::set_cell_type(int x, int y, int z, CellType type) {
     if (x >= 0 && x < nx_ && y >= 0 && y < ny_ && z >= 0 && z < nz_) {
         cell_type_[(static_cast<std::size_t>(z) * ny_ + y) * nx_ + x] = static_cast<uint8_t>(type);
+        if (type != CellType::Fluid) {
+            is_periodic_ = false;
+        }
     }
 }
 
@@ -144,6 +147,7 @@ CellType LatticeGrid3D::get_cell_type(int x, int y, int z) const {
 }
 
 void LatticeGrid3D::set_solid_box(int x0, int y0, int z0, int x1, int y1, int z1) {
+    is_periodic_ = false;
     for (int z = std::max(0, z0); z <= std::min(nz_ - 1, z1); ++z) {
         for (int y = std::max(0, y0); y <= std::min(ny_ - 1, y1); ++y) {
             for (int x = std::max(0, x0); x <= std::min(nx_ - 1, x1); ++x) {
@@ -154,6 +158,7 @@ void LatticeGrid3D::set_solid_box(int x0, int y0, int z0, int x1, int y1, int z1
 }
 
 void LatticeGrid3D::set_solid_sphere(real_t cx, real_t cy, real_t cz, real_t radius) {
+    is_periodic_ = false;
     real_t r_sq = radius * radius;
     int min_x = std::max(0, static_cast<int>(cx - radius - 1));
     int max_x = std::min(nx_ - 1, static_cast<int>(cx + radius + 1));
@@ -177,6 +182,7 @@ void LatticeGrid3D::set_solid_sphere(real_t cx, real_t cy, real_t cz, real_t rad
 }
 
 void LatticeGrid3D::set_solid_cylinder_z(real_t cx, real_t cy, real_t radius) {
+    is_periodic_ = false;
     real_t r_sq = radius * radius;
     int min_x = std::max(0, static_cast<int>(cx - radius - 1));
     int max_x = std::min(nx_ - 1, static_cast<int>(cx + radius + 1));
@@ -197,6 +203,7 @@ void LatticeGrid3D::set_solid_cylinder_z(real_t cx, real_t cy, real_t radius) {
 }
 
 void LatticeGrid3D::set_moving_wall_top(real_t u_wall_x, real_t u_wall_z) {
+    is_periodic_ = false;
     has_moving_wall_top_ = true;
     u_wall_top_x_ = u_wall_x;
     u_wall_top_z_ = u_wall_z;
@@ -208,6 +215,7 @@ void LatticeGrid3D::set_moving_wall_top(real_t u_wall_x, real_t u_wall_z) {
 }
 
 void LatticeGrid3D::build_curved_sphere_links(real_t cx, real_t cy, real_t cz, real_t radius) {
+    is_periodic_ = false;
     std::vector<int> fluid_indices;
     std::vector<int> q_dirs;
     std::vector<real_t> delta_fractions;
@@ -226,7 +234,6 @@ void LatticeGrid3D::build_curved_sphere_links(real_t cx, real_t cy, real_t cz, r
 
                     if (ny_y >= 0 && ny_y < ny_ && nz_z >= 0 && nz_z < nz_) {
                         if (get_cell_type(nx_x, ny_y, nz_z) == CellType::Solid) {
-                            // Find analytical intersection of line segment with sphere
                             Vec3 p0(static_cast<real_t>(x) - cx,
                                     static_cast<real_t>(y) - cy,
                                     static_cast<real_t>(z) - cz);
@@ -234,7 +241,6 @@ void LatticeGrid3D::build_curved_sphere_links(real_t cx, real_t cy, real_t cz, r
                                    static_cast<real_t>(D3Q19::CY[q]),
                                    static_cast<real_t>(D3Q19::CZ[q]));
 
-                            // Solve |p0 + delta * d|^2 = radius^2
                             real_t a = d.norm_sq();
                             real_t b = 2.0f * p0.dot(d);
                             real_t c = p0.norm_sq() - radius * radius;
@@ -337,14 +343,18 @@ void LatticeGrid3D::step(
         );
     }
 
-    // 3. Streaming step with integrated halfway bounce-back
-    ispc::d3q19_stream_with_boundaries(
-        f_dst_.data(), f_src_.data(), cell_type_.data(),
-        nx_, ny_, nz_,
-        has_moving_wall_top_ ? u_wall_top_x_ : 0.0f,
-        0.0f,
-        has_moving_wall_top_ ? u_wall_top_z_ : 0.0f
-    );
+    // 3. Streaming step
+    if (is_periodic_ && !has_moving_wall_top_) {
+        ispc::d3q19_stream_periodic(f_dst_.data(), f_src_.data(), nx_, ny_, nz_);
+    } else {
+        ispc::d3q19_stream_with_boundaries(
+            f_dst_.data(), f_src_.data(), cell_type_.data(),
+            nx_, ny_, nz_,
+            has_moving_wall_top_ ? u_wall_top_x_ : 0.0f,
+            0.0f,
+            has_moving_wall_top_ ? u_wall_top_z_ : 0.0f
+        );
+    }
 
     // 4. Second-order Bouzidi curved boundary correction if active
     if (use_curved_bfl_ && num_bfl_links_ > 0) {

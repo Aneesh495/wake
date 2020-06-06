@@ -43,7 +43,10 @@ public:
 
     void update_macroscopic();
 
-    // Boundary geometry setters
+    // Boundary configuration methods
+    void set_periodic(bool periodic) noexcept { is_periodic_ = periodic; }
+    bool is_periodic() const noexcept { return is_periodic_; }
+
     void set_cell_type(int x, int y, int z, CellType type);
     CellType get_cell_type(int x, int y, int z) const;
 
@@ -92,6 +95,7 @@ private:
     uint64_t step_count_{0};
     real_t tau_{0.6f};
 
+    bool is_periodic_{true};
     bool has_moving_wall_top_{false};
     real_t u_wall_top_x_{0.0f};
     real_t u_wall_top_z_{0.0f};
