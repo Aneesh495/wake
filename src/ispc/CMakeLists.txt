@@ -14,6 +14,9 @@ set(ISPC_SOURCES
     d3q19_streaming.ispc
     d3q19_les.ispc
     d3q19_curved.ispc
+    d3q27_moments.ispc
+    d3q27_collision_mrt.ispc
+    d3q27_streaming.ispc
 )
 
 add_library(wake_ispc_kernels STATIC
