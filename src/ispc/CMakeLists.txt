@@ -17,6 +17,7 @@ set(ISPC_SOURCES
     d3q27_moments.ispc
     d3q27_collision_mrt.ispc
     d3q27_streaming.ispc
+    forces_momentum_exchange.ispc
 )
 
 add_library(wake_ispc_kernels STATIC
