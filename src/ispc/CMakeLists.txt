@@ -20,6 +20,7 @@ set(ISPC_SOURCES
     forces_momentum_exchange.ispc
     ibm_kernels.ispc
     thermal_kernels.ispc
+    analytics_kernels.ispc
 )
 
 add_library(wake_ispc_kernels STATIC
