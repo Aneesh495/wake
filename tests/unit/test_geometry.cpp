@@ -1,5 +1,6 @@
 #include "wake/geometry/primitives.hpp"
 #include "wake/geometry/obj_loader.hpp"
+#include "wake/geometry/naca_airfoil.hpp"
 #include <iostream>
 #include <cassert>
 #include <cmath>
@@ -69,9 +70,40 @@ void test_obj_loader_and_voxelizer() {
     std::cout << "Wavefront OBJ loader and voxelizer PASSED." << std::endl;
 }
 
+void test_naca_airfoil() {
+    std::cout << "Testing NACA airfoil coordinate generation and rasterization..." << std::endl;
+
+    NacaAirfoil naca0012("0012", 50.0f, 5.0f);
+    assert(naca0012.max_thickness() == 0.12f);
+    assert(naca0012.max_camber() == 0.0f);
+    assert(!naca0012.polygon().empty());
+
+    // Rasterize into 2D grid
+    LatticeGrid2D grid2d(128, 64, 0.02f);
+    grid2d.initialize();
+    naca0012.rasterize(grid2d, 30.0f, 32.0f);
+
+    // Near quarter chord should be solid
+    assert(grid2d.get_cell_type(42, 32) == CellType::Solid);
+    // Boundary cell outside should be fluid
+    assert(grid2d.get_cell_type(0, 0) == CellType::Fluid);
+
+    // Voxelize extruded wing into 3D grid
+    LatticeGrid3D grid3d(64, 64, 32, 0.02f);
+    grid3d.initialize();
+    naca0012.voxelize_extruded(grid3d, 15.0f, 32.0f, 8, 24);
+
+    assert(grid3d.get_cell_type(25, 32, 16) == CellType::Solid);
+    assert(grid3d.get_cell_type(25, 32, 0) == CellType::Fluid);
+    assert(grid3d.get_cell_type(25, 32, 31) == CellType::Fluid);
+
+    std::cout << "NACA airfoil PASSED." << std::endl;
+}
+
 int main() {
     test_primitives_2d();
     test_obj_loader_and_voxelizer();
+    test_naca_airfoil();
     std::cout << "All geometry tests completed successfully!" << std::endl;
     return 0;
 }

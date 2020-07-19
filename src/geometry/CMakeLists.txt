@@ -1,6 +1,7 @@
 add_library(wake_geometry STATIC
     primitives.cpp
     obj_loader.cpp
+    naca_airfoil.cpp
 )
 
 target_include_directories(wake_geometry PUBLIC
