@@ -1,5 +1,6 @@
 #include "wake/export/terminal_renderer.hpp"
 #include "wake/export/vtk_exporter.hpp"
+#include "wake/export/image_exporter.hpp"
 #include <iostream>
 #include <fstream>
 #include <cassert>
@@ -64,9 +65,32 @@ void test_vtk_exporter() {
     std::cout << "VTK XML exporter PASSED." << std::endl;
 }
 
+void test_image_exporter() {
+    std::cout << "Testing Netpbm binary PPM image exporter..." << std::endl;
+
+    LatticeGrid2D grid2d(40, 20, 0.02f);
+    grid2d.initialize(1.0f, 0.05f, 0.0f);
+    grid2d.set_solid_circle(10.0f, 10.0f, 4.0f);
+
+    const std::string ppm_path = "test_slice.ppm";
+    bool ok = ImageExporter::export_ppm_2d(ppm_path, grid2d);
+    assert(ok);
+
+    std::ifstream in(ppm_path, std::ios::binary);
+    assert(in.is_open());
+    std::string magic;
+    in >> magic;
+    assert(magic == "P6");
+    in.close();
+    std::remove(ppm_path.c_str());
+
+    std::cout << "Netpbm PPM exporter PASSED." << std::endl;
+}
+
 int main() {
     test_terminal_renderer();
     test_vtk_exporter();
+    test_image_exporter();
     std::cout << "All export tests passed successfully!" << std::endl;
     return 0;
 }
