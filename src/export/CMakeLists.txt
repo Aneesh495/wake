@@ -2,6 +2,7 @@ add_library(wake_export STATIC
     terminal_renderer.cpp
     vtk_exporter.cpp
     image_exporter.cpp
+    csv_telemetry.cpp
 )
 
 target_include_directories(wake_export PUBLIC

@@ -1,6 +1,7 @@
 #include "wake/export/terminal_renderer.hpp"
 #include "wake/export/vtk_exporter.hpp"
 #include "wake/export/image_exporter.hpp"
+#include "wake/export/csv_telemetry.hpp"
 #include <iostream>
 #include <fstream>
 #include <cassert>
@@ -87,10 +88,36 @@ void test_image_exporter() {
     std::cout << "Netpbm PPM exporter PASSED." << std::endl;
 }
 
+void test_telemetry_exporter() {
+    std::cout << "Testing Telemetry CSV and JSON exporter..." << std::endl;
+
+    TelemetryExporter exporter;
+    exporter.record_aero({1, 0.01f, {1.2f, 0.1f, 0.0f, 1.45f, 0.22f, 0.01f}});
+    exporter.record_aero({2, 0.02f, {1.3f, -0.1f, 0.0f, 1.47f, -0.21f, -0.01f}});
+
+    exporter.record_performance({1, 5.2, 125.4, 0.05f, 1000.0f, 2.5f});
+    exporter.record_performance({2, 5.1, 127.8, 0.05f, 1000.0f, 2.5f});
+
+    const std::string csv_aero = "test_aero.csv";
+    const std::string csv_perf = "test_perf.csv";
+    const std::string json_summary = "test_summary.json";
+
+    assert(exporter.write_aero_csv(csv_aero));
+    assert(exporter.write_performance_csv(csv_perf));
+    assert(exporter.write_summary_json(json_summary, "KarmanVortex", 0.205f, 0.045f));
+
+    std::remove(csv_aero.c_str());
+    std::remove(csv_perf.c_str());
+    std::remove(json_summary.c_str());
+
+    std::cout << "Telemetry exporter PASSED." << std::endl;
+}
+
 int main() {
     test_terminal_renderer();
     test_vtk_exporter();
     test_image_exporter();
+    test_telemetry_exporter();
     std::cout << "All export tests passed successfully!" << std::endl;
     return 0;
 }
