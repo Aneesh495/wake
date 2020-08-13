@@ -1,6 +1,7 @@
 add_library(wake_scenarios STATIC
     scenario_registry.cpp
     karman_vortex.cpp
+    naca_airfoil_stall.cpp
 )
 
 target_include_directories(wake_scenarios PUBLIC

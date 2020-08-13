@@ -1,5 +1,6 @@
 #include "wake/scenarios/scenario_registry.hpp"
 #include "wake/scenarios/karman_vortex.hpp"
+#include "wake/scenarios/naca_airfoil_stall.hpp"
 #include <iostream>
 #include <cassert>
 
@@ -39,9 +40,29 @@ void test_karman_vortex_execution() {
               << ", MLUPS = " << scenario.current_mlups() << ")." << std::endl;
 }
 
+void test_airfoil_scenario_execution() {
+    std::cout << "Testing NACA Airfoil scenario execution (small grid)..." << std::endl;
+
+    NacaAirfoilScenario scenario("0012", 8.0f, 100, 50, 500.0f, 0.05f, 30.0f);
+    scenario.setup();
+
+    for (int step = 0; step < 50; ++step) {
+        scenario.step();
+    }
+
+    assert(scenario.current_step() == 50);
+    assert(scenario.current_mlups() > 0.0);
+    assert(scenario.latest_cd() > 0.0f);
+
+    std::cout << "NACA Airfoil execution PASSED (Cd = " << scenario.latest_cd()
+              << ", Cl = " << scenario.latest_cl()
+              << ", MLUPS = " << scenario.current_mlups() << ")." << std::endl;
+}
+
 int main() {
     test_scenario_registry();
     test_karman_vortex_execution();
+    test_airfoil_scenario_execution();
     std::cout << "All scenario tests passed successfully!" << std::endl;
     return 0;
 }
