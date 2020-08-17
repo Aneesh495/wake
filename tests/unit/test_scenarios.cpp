@@ -1,6 +1,7 @@
 #include "wake/scenarios/scenario_registry.hpp"
 #include "wake/scenarios/karman_vortex.hpp"
 #include "wake/scenarios/naca_airfoil_stall.hpp"
+#include "wake/scenarios/lid_driven_cavity.hpp"
 #include <iostream>
 #include <cassert>
 
@@ -59,10 +60,30 @@ void test_airfoil_scenario_execution() {
               << ", MLUPS = " << scenario.current_mlups() << ")." << std::endl;
 }
 
+void test_cavity_scenario_execution() {
+    std::cout << "Testing 3D Lid-Driven Cavity scenario execution..." << std::endl;
+
+    LidDrivenCavityScenario scenario(24, 100.0f, 0.08f);
+    scenario.setup();
+
+    for (int step = 0; step < 20; ++step) {
+        scenario.step();
+    }
+
+    assert(scenario.current_step() == 20);
+    assert(scenario.current_mlups() > 0.0);
+
+    auto ux_prof = scenario.extract_vertical_centerline_ux();
+    assert(ux_prof.size() == 24);
+
+    std::cout << "3D Lid-Driven Cavity execution PASSED (MLUPS = " << scenario.current_mlups() << ")." << std::endl;
+}
+
 int main() {
     test_scenario_registry();
     test_karman_vortex_execution();
     test_airfoil_scenario_execution();
+    test_cavity_scenario_execution();
     std::cout << "All scenario tests passed successfully!" << std::endl;
     return 0;
 }
