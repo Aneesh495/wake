@@ -3,6 +3,7 @@ add_library(wake_scenarios STATIC
     karman_vortex.cpp
     naca_airfoil_stall.cpp
     lid_driven_cavity.cpp
+    sphere_3d_wake.cpp
 )
 
 target_include_directories(wake_scenarios PUBLIC
