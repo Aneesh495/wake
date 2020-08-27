@@ -4,6 +4,7 @@ add_library(wake_scenarios STATIC
     naca_airfoil_stall.cpp
     lid_driven_cavity.cpp
     sphere_3d_wake.cpp
+    thermal_convection.cpp
 )
 
 target_include_directories(wake_scenarios PUBLIC
@@ -17,4 +18,5 @@ target_link_libraries(wake_scenarios PUBLIC
     wake_geometry
     wake_export
     wake_analytics
+    wake_thermal
 )

@@ -3,6 +3,7 @@
 #include "wake/scenarios/naca_airfoil_stall.hpp"
 #include "wake/scenarios/lid_driven_cavity.hpp"
 #include "wake/scenarios/sphere_3d_wake.hpp"
+#include "wake/scenarios/thermal_convection.hpp"
 #include <iostream>
 #include <cassert>
 
@@ -98,12 +99,31 @@ void test_sphere_scenario_execution() {
               << ", MLUPS = " << scenario.current_mlups() << ")." << std::endl;
 }
 
+void test_thermal_scenario_execution() {
+    std::cout << "Testing Rayleigh-Benard Thermal Convection scenario execution..." << std::endl;
+
+    ThermalConvectionScenario scenario(60, 30, 5000.0f, 0.71f);
+    scenario.setup();
+
+    for (int step = 0; step < 20; ++step) {
+        scenario.step();
+    }
+
+    assert(scenario.current_step() == 20);
+    assert(scenario.current_mlups() > 0.0);
+    assert(scenario.current_nusselt() > 0.0f);
+
+    std::cout << "Rayleigh-Benard Thermal Convection execution PASSED (Nu = " << scenario.current_nusselt()
+              << ", MLUPS = " << scenario.current_mlups() << ")." << std::endl;
+}
+
 int main() {
     test_scenario_registry();
     test_karman_vortex_execution();
     test_airfoil_scenario_execution();
     test_cavity_scenario_execution();
     test_sphere_scenario_execution();
+    test_thermal_scenario_execution();
     std::cout << "All scenario tests passed successfully!" << std::endl;
     return 0;
 }

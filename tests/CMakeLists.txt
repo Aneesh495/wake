@@ -4,6 +4,7 @@ macro(wake_add_test test_name source_file)
     add_executable(${test_name} ${source_file})
     target_link_libraries(${test_name} PRIVATE
         wake_scenarios
+        wake_thermal
         wake_export
         wake_geometry
         wake_analytics
