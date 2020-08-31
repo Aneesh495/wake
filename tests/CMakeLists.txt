@@ -3,6 +3,7 @@
 macro(wake_add_test test_name source_file)
     add_executable(${test_name} ${source_file})
     target_link_libraries(${test_name} PRIVATE
+        wake_runner
         wake_scenarios
         wake_thermal
         wake_export
@@ -27,3 +28,4 @@ wake_add_test(test_field_analytics unit/test_field_analytics.cpp)
 wake_add_test(test_geometry unit/test_geometry.cpp)
 wake_add_test(test_export unit/test_export.cpp)
 wake_add_test(test_scenarios unit/test_scenarios.cpp)
+wake_add_test(test_runner unit/test_runner.cpp)
