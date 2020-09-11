@@ -1,11 +1,50 @@
 #include "wake/scenarios/scenario_registry.hpp"
+#include "wake/scenarios/karman_vortex.hpp"
+#include "wake/scenarios/naca_airfoil_stall.hpp"
+#include "wake/scenarios/lid_driven_cavity.hpp"
+#include "wake/scenarios/sphere_3d_wake.hpp"
+#include "wake/scenarios/thermal_convection.hpp"
 #include <stdexcept>
 
 namespace wake {
 
 ScenarioRegistry& ScenarioRegistry::instance() {
     static ScenarioRegistry inst;
+    static bool initialized = false;
+    if (!initialized) {
+        initialized = true;
+        initialize_builtin_scenarios();
+    }
     return inst;
+}
+
+void ScenarioRegistry::initialize_builtin_scenarios() {
+    auto& reg = ScenarioRegistry::instance();
+    if (!reg.has_scenario("karman")) {
+        reg.register_scenario("karman", []() -> std::unique_ptr<Scenario> {
+            return std::make_unique<KarmanVortexScenario>();
+        });
+    }
+    if (!reg.has_scenario("airfoil")) {
+        reg.register_scenario("airfoil", []() -> std::unique_ptr<Scenario> {
+            return std::make_unique<NacaAirfoilScenario>();
+        });
+    }
+    if (!reg.has_scenario("cavity")) {
+        reg.register_scenario("cavity", []() -> std::unique_ptr<Scenario> {
+            return std::make_unique<LidDrivenCavityScenario>();
+        });
+    }
+    if (!reg.has_scenario("sphere")) {
+        reg.register_scenario("sphere", []() -> std::unique_ptr<Scenario> {
+            return std::make_unique<Sphere3DWakeScenario>();
+        });
+    }
+    if (!reg.has_scenario("thermal")) {
+        reg.register_scenario("thermal", []() -> std::unique_ptr<Scenario> {
+            return std::make_unique<ThermalConvectionScenario>();
+        });
+    }
 }
 
 void ScenarioRegistry::register_scenario(const std::string& name, ScenarioCreator creator) {

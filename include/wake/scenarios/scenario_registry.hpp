@@ -27,6 +27,9 @@ public:
     // Check if scenario is registered
     bool has_scenario(const std::string& name) const;
 
+    // Explicitly initialize all built-in scenarios
+    static void initialize_builtin_scenarios();
+
 private:
     ScenarioRegistry() = default;
     std::unordered_map<std::string, ScenarioCreator> registry_;
