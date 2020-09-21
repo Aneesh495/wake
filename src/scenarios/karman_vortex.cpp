@@ -14,6 +14,7 @@ extern "C" {
         const uint8_t cell_type[],
         int nx, int ny,
         float center_x, float center_y,
+        float max_radius,
         float &fx_out, float &fy_out, float &torque_z_out
     );
 }
@@ -72,6 +73,12 @@ void KarmanVortexScenario::setup() {
     grid_.set_inflow_west(u_inflow_, 0.0f);
     grid_.set_outflow_east(RHO_0);
 
+    // Top and bottom no-slip channel boundary walls
+    for (int x = 0; x < nx_; ++x) {
+        grid_.set_cell_type(x, 0, CellType::Solid);
+        grid_.set_cell_type(x, ny_ - 1, CellType::Solid);
+    }
+
     // Rasterize circular cylinder obstacle
     real_t radius = cylinder_diameter_ * 0.5f;
     grid_.set_solid_circle(cx_, cy_, radius);
@@ -102,6 +109,7 @@ void KarmanVortexScenario::step() {
         grid_.cell_type_data(),
         nx_, ny_,
         cx_, cy_,
+        cylinder_diameter_ * 1.5f,
         fx, fy, tz
     );
 

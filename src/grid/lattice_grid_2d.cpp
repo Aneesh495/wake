@@ -248,10 +248,9 @@ void LatticeGrid2D::step(
     }
 
     if (has_outflow_east_) {
-        ispc::d2q9_apply_convective_outflow_east(
-            f_src_.data(), f_prev_outflow_.data(), u_inflow_x_ > 0.0f ? u_inflow_x_ : 0.05f, nx_, ny_
+        ispc::d2q9_apply_zou_he_outflow_east(
+            f_src_.data(), rho_.data(), ux_.data(), uy_.data(), rho_outflow_, nx_, ny_
         );
-        std::memcpy(f_prev_outflow_.data(), f_src_.data(), f_src_.bytes());
     }
 
     // 5. Update macroscopic moments with body force velocity correction

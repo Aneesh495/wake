@@ -52,7 +52,7 @@ export void d2q9_apply_zou_he_inflow_west(
 ) {
     uniform int total_nodes = nx * ny;
 
-    foreach (y = 0 ... ny) {
+    foreach (y = 1 ... ny - 1) {
         varying int idx = y * nx + 0;
 
         varying float f0 = f[0 * total_nodes + idx];
@@ -93,7 +93,7 @@ export void d2q9_apply_zou_he_outflow_east(
 ) {
     uniform int total_nodes = nx * ny;
 
-    foreach (y = 0 ... ny) {
+    foreach (y = 1 ... ny - 1) {
         varying int idx = y * nx + (nx - 1);
 
         varying float f0 = f[0 * total_nodes + idx];
@@ -133,7 +133,7 @@ export void d2q9_apply_convective_outflow_east(
     uniform float alpha = u_conv / (1.0f + u_conv);
     uniform float beta = 1.0f / (1.0f + u_conv);
 
-    foreach (y = 0 ... ny) {
+    foreach (y = 1 ... ny - 1) {
         varying int idx_out = y * nx + (nx - 1);
         varying int idx_in  = y * nx + (nx - 2);
 

@@ -2,7 +2,7 @@
 #include "wake/ispc/lbm_d3q19.isph"
 
 // Exported ISPC kernel for 2D D2Q9 Momentum Exchange Method (MEM)
-// Integrates net aerodynamic lift, drag, and pitching moment across all obstacle boundary links
+// Integrates net aerodynamic lift, drag, and pitching moment across obstacle boundary links
 export void d2q9_compute_momentum_exchange_forces(
     const uniform float f_post_collision[],
     const uniform uint8 cell_type[],
@@ -10,11 +10,13 @@ export void d2q9_compute_momentum_exchange_forces(
     uniform int ny,
     uniform float center_x,
     uniform float center_y,
+    uniform float max_radius,
     uniform float &fx_out,
     uniform float &fy_out,
     uniform float &torque_z_out
 ) {
     uniform int total_nodes = nx * ny;
+    uniform float r_max_sq = max_radius * max_radius;
     varying float sum_fx = 0.0f;
     varying float sum_fy = 0.0f;
     varying float sum_tz = 0.0f;
@@ -41,18 +43,18 @@ export void d2q9_compute_momentum_exchange_forces(
                         varying uint8 neighbor_type = cell_type[neighbor_idx];
 
                         if (neighbor_type == CELL_SOLID || neighbor_type == CELL_MOVING_WALL) {
-                            varying float f_val = f_q[idx];
-                            // Link force: F_link = 2.0 * f_q * c_q
-                            varying float d_fx = 2.0f * f_val * (float)cx;
-                            varying float d_fy = 2.0f * f_val * (float)cy;
-
-                            sum_fx += d_fx;
-                            sum_fy += d_fy;
-
-                            // Moment arm: r = x_wall - center = (x + 0.5 * cx - center_x, y + 0.5 * cy - center_y)
                             varying float rx = ((float)x + 0.5f * (float)cx) - center_x;
                             varying float ry = ((float)y + 0.5f * (float)cy) - center_y;
-                            sum_tz += (rx * d_fy - ry * d_fx);
+
+                            if (max_radius <= 0.0f || (rx * rx + ry * ry <= r_max_sq)) {
+                                varying float f_val = f_q[idx];
+                                varying float d_fx = 2.0f * f_val * (float)cx;
+                                varying float d_fy = 2.0f * f_val * (float)cy;
+
+                                sum_fx += d_fx;
+                                sum_fy += d_fy;
+                                sum_tz += (rx * d_fy - ry * d_fx);
+                            }
                         }
                     }
                 }
@@ -75,11 +77,13 @@ export void d3q19_compute_momentum_exchange_forces(
     uniform float center_x,
     uniform float center_y,
     uniform float center_z,
+    uniform float max_radius,
     uniform float &fx_out,
     uniform float &fy_out,
     uniform float &fz_out
 ) {
     uniform int total_nodes = nx * ny * nz;
+    uniform float r_max_sq = max_radius * max_radius;
     varying float sum_fx = 0.0f;
     varying float sum_fy = 0.0f;
     varying float sum_fz = 0.0f;
@@ -111,10 +115,16 @@ export void d3q19_compute_momentum_exchange_forces(
                         varying uint8 neighbor_type = cell_type[neighbor_idx];
 
                         if (neighbor_type == CELL_SOLID || neighbor_type == CELL_MOVING_WALL) {
-                            varying float f_val = f_q[idx];
-                            sum_fx += 2.0f * f_val * (float)cx;
-                            sum_fy += 2.0f * f_val * (float)cy;
-                            sum_fz += 2.0f * f_val * (float)cz;
+                            varying float rx = ((float)x + 0.5f * (float)cx) - center_x;
+                            varying float ry = ((float)y + 0.5f * (float)cy) - center_y;
+                            varying float rz = ((float)z + 0.5f * (float)cz) - center_z;
+
+                            if (max_radius <= 0.0f || (rx * rx + ry * ry + rz * rz <= r_max_sq)) {
+                                varying float f_val = f_q[idx];
+                                sum_fx += 2.0f * f_val * (float)cx;
+                                sum_fy += 2.0f * f_val * (float)cy;
+                                sum_fz += 2.0f * f_val * (float)cz;
+                            }
                         }
                     }
                 }

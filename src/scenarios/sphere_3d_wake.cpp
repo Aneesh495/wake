@@ -14,6 +14,7 @@ extern "C" {
         const uint8_t cell_type[],
         int nx, int ny, int nz,
         float center_x, float center_y, float center_z,
+        float max_radius,
         float &fx_out, float &fy_out, float &fz_out
     );
 }
@@ -99,6 +100,7 @@ void Sphere3DWakeScenario::step() {
         grid_.cell_type_data(),
         nx_, ny_, nz_,
         cx_, cy_, cz_,
+        sphere_radius_ * 2.0f,
         fx, fy, fz
     );
 

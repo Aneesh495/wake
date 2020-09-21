@@ -14,6 +14,7 @@ extern "C" {
         const uint8_t cell_type[],
         int nx, int ny,
         float center_x, float center_y,
+        float max_radius,
         float &fx_out, float &fy_out, float &torque_z_out
     );
 }
@@ -68,6 +69,12 @@ void NacaAirfoilScenario::setup() {
     grid_.set_inflow_west(u_inflow_, 0.0f);
     grid_.set_outflow_east(RHO_0);
 
+    // Top and bottom no-slip channel walls
+    for (int x = 0; x < nx_; ++x) {
+        grid_.set_cell_type(x, 0, CellType::Solid);
+        grid_.set_cell_type(x, ny_ - 1, CellType::Solid);
+    }
+
     // Rasterize airfoil geometry with angle of attack
     airfoil_.rasterize(grid_, cx_, cy_);
 
@@ -99,6 +106,7 @@ void NacaAirfoilScenario::step() {
         grid_.cell_type_data(),
         nx_, ny_,
         qc_x, qc_y,
+        chord_ * 1.5f,
         fx, fy, tz
     );
 

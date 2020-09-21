@@ -15,6 +15,7 @@ extern "C" {
         const uint8_t cell_type[],
         int nx, int ny,
         float center_x, float center_y,
+        float max_radius,
         float &fx_out, float &fy_out, float &torque_z_out
     );
 }
@@ -45,7 +46,7 @@ int main() {
 
     float fx = 0.0f, fy = 0.0f, tz = 0.0f;
     ispc::d2q9_compute_momentum_exchange_forces(
-        f.data(), cell_type.data(), NX, NY, 7.5f, 7.5f, fx, fy, tz
+        f.data(), cell_type.data(), NX, NY, 7.5f, 7.5f, 0.0f, fx, fy, tz
     );
 
     // In static equilibrium with uniform distributions, net symmetric forces should be zero
@@ -57,7 +58,7 @@ int main() {
     // Introduce asymmetric momentum on west face of obstacle: node (6, 7) pointing east (q=1)
     f[1 * count + (7 * NX + 6)] += 0.05f;
     ispc::d2q9_compute_momentum_exchange_forces(
-        f.data(), cell_type.data(), NX, NY, 7.5f, 7.5f, fx, fy, tz
+        f.data(), cell_type.data(), NX, NY, 7.5f, 7.5f, 0.0f, fx, fy, tz
     );
 
     // d_fx = 2.0 * 0.05 * 1.0 = 0.1
