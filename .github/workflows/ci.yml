@@ -1,0 +1,61 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-test:
+    name: Build & Test (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Install Dependencies (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake ninja-build build-essential
+          ISPC_VERSION="1.23.0"
+          curl -sSL "https://github.com/ispc/ispc/releases/download/v${ISPC_VERSION}/ispc-v${ISPC_VERSION}-linux.tar.gz" -o ispc.tar.gz
+          tar -xzf ispc.tar.gz
+          sudo cp ispc-v${ISPC_VERSION}-linux/bin/ispc /usr/local/bin/
+          rm -rf ispc*
+          ispc --version
+
+      - name: Install Dependencies (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          brew install cmake ninja ispc
+          ispc --version
+
+      - name: Configure CMake
+        run: |
+          cmake -B build -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DWAKE_BUILD_TESTS=ON \
+            -DWAKE_BUILD_BENCHMARKS=ON
+
+      - name: Build All Targets
+        run: |
+          cmake --build build --config Release
+
+      - name: Run Test Suite (CTest)
+        run: |
+          cd build
+          ctest --output-on-failure --parallel 4
+
+      - name: Verify CLI Functionality
+        run: |
+          ./build/bin/wake --version
+          ./build/bin/wake --help
+          ./build/bin/wake list
+          ./build/bin/wake run --scenario karman --steps 100 --output test_output
