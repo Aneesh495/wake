@@ -112,7 +112,40 @@ int main(int argc, char* argv[]) {
             return 1;
         }
 
-        std::string scenario_name = argv[2];
+        std::string scenario_name = "";
+        std::string export_dir_override = "";
+        uint64_t steps_override = 0;
+        uint64_t interval_override = 0;
+        uint64_t render_interval_override = 50;
+        bool live_render = true;
+        double target_fps = 0.0;
+
+        for (int i = 2; i < argc; ++i) {
+            std::string arg = argv[i];
+            if ((arg == "--scenario" || arg == "-s") && i + 1 < argc) {
+                scenario_name = argv[++i];
+            } else if ((arg == "--steps" || arg == "-n") && i + 1 < argc) {
+                steps_override = std::stoull(argv[++i]);
+            } else if ((arg == "--export" || arg == "--output" || arg == "-o") && i + 1 < argc) {
+                export_dir_override = argv[++i];
+            } else if ((arg == "--interval" || arg == "-i") && i + 1 < argc) {
+                interval_override = std::stoull(argv[++i]);
+            } else if (arg == "--render-rate" && i + 1 < argc) {
+                render_interval_override = std::stoull(argv[++i]);
+            } else if (arg == "--headless") {
+                live_render = false;
+            } else if (arg == "--fps" && i + 1 < argc) {
+                target_fps = std::stod(argv[++i]);
+            } else if (scenario_name.empty() && !arg.starts_with("-")) {
+                scenario_name = arg;
+            }
+        }
+
+        if (scenario_name.empty()) {
+            std::cerr << "Error: No scenario specified. Use '" << argv[0] << " list' to view scenarios.\n";
+            return 1;
+        }
+
         if (!wake::ScenarioRegistry::instance().has_scenario(scenario_name)) {
             std::cerr << "Error: Unknown scenario '" << scenario_name << "'. Available scenarios:\n";
             for (const auto& name : wake::ScenarioRegistry::instance().list_scenarios()) {
@@ -125,30 +158,12 @@ int main(int argc, char* argv[]) {
         const auto& meta = scenario->metadata();
 
         wake::RunnerConfig config;
-        config.max_steps = meta.default_steps;
-        config.export_interval = meta.export_interval;
-        config.render_interval = 50;
-        config.live_terminal_render = true;
-        config.export_dir = "./output_" + scenario_name;
-        config.target_fps = 0.0;
-
-        // Parse optional flags
-        for (int i = 3; i < argc; ++i) {
-            std::string arg = argv[i];
-            if (arg == "--steps" && i + 1 < argc) {
-                config.max_steps = std::stoull(argv[++i]);
-            } else if (arg == "--export" && i + 1 < argc) {
-                config.export_dir = argv[++i];
-            } else if (arg == "--interval" && i + 1 < argc) {
-                config.export_interval = std::stoull(argv[++i]);
-            } else if (arg == "--render-rate" && i + 1 < argc) {
-                config.render_interval = std::stoull(argv[++i]);
-            } else if (arg == "--headless") {
-                config.live_terminal_render = false;
-            } else if (arg == "--fps" && i + 1 < argc) {
-                config.target_fps = std::stod(argv[++i]);
-            }
-        }
+        config.max_steps = steps_override > 0 ? steps_override : meta.default_steps;
+        config.export_interval = interval_override > 0 ? interval_override : meta.export_interval;
+        config.render_interval = render_interval_override;
+        config.live_terminal_render = live_render;
+        config.export_dir = !export_dir_override.empty() ? export_dir_override : ("./output_" + scenario_name);
+        config.target_fps = target_fps;
 
         print_banner();
         std::cout << "[WAKE] Launching scenario: \033[1;32m" << meta.name << "\033[0m\n"
